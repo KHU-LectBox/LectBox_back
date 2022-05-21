@@ -6,4 +6,4 @@ from app.models import Users
 class SignUptSerializer(serializers.ModelSerializer):
     class Meta:
         model = Users
-        fields = ['user_id', 'pw', 'is_student', 'name', 'email', 'school', 'department']
+        fields = ['u_id', 'pw', 'is_student', 'name', 'email', 'school', 'department']
