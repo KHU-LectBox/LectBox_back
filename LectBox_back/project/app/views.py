@@ -37,7 +37,7 @@ def user_detail(request, userid):
     특정 유저 정보 이용
     """
     try:
-        user = Users.objects.get(user_id=userid)
+        user = Users.objects.get(u_id=userid)
     except Users.DoesNotExist:
         return HttpResponse(status=404)
 
