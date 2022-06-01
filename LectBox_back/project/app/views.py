@@ -57,7 +57,8 @@ class LoginView(APIView):
         if user is not None:
             token = Token.objects.create(user=user)
             #token = Token.objects.get(user=user)
-            return Response({"Token": token.key}, status=200)
+            users = Users.objects.get(user= user)
+            return Response({"Token": token.key, "id":user.username, "name" : users.name, "is_student" : users.is_student }, status=200)
         else:
             return Response({"'id 또는 pw가 일치하지 않습니다."},status=401)
 
@@ -126,12 +127,12 @@ def folder_detail(request, f_id = NULL):
         #자식 폴더 결정
         if (Folder_File_Relationships.objects.filter(parent = f_id).exists()):
             items = Folder_File_Relationships.objects.filter(parent = f_id)
-            print("log1")
             serialized_items = childSerializer(items, many=True)
-            print(f'짠!{serialized_items.data} ')
+            return Response({"id": folder.id, "made_by": folder.made_by.username , "name": folder.name, "max_volume": folder.max_volume, "volume": folder.volume, "type": folder.type, 'items':serialized_items.data}, status=200)
         else:
             items = NULL
-        return Response({"id": folder.id, "made_by": folder.made_by.username , "name": folder.name, "max_volume": folder.max_volume, "volume": folder.volume, "type": folder.type, 'items':serialized_items.data}, status=200)
+            return Response({"id": folder.id, "made_by": folder.made_by.username , "name": folder.name, "max_volume": folder.max_volume, "volume": folder.volume, "type": folder.type, 'items':items}, status=200)
+        
         
     #폴더 생성
     if request.method == 'POST':
@@ -142,8 +143,8 @@ def folder_detail(request, f_id = NULL):
         if(not (request.data['parent'] == 0)):
             
             p_folder = FolderItems.objects.get(id =int(request.data['parent']))
-            
-            relation = Folder_File_Relationships(parent =folder, child =p_folder.id, name=request.data['name'],is_folder=True )
+            print(f'부모: {p_folder.id}')
+            relation = Folder_File_Relationships(parent =p_folder, child =folder.id, name=request.data['name'],is_folder=True )
             relation.save()
 
         return Response({'id': folder.id, }, status=200)
