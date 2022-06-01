@@ -6,6 +6,7 @@ urlpatterns = [
     path('member-detail/', views.user_detail),
     path('login/', views.LoginView.as_view()),
     path('folder/<int:f_id>', views.folder_detail),
+    path('folder/<int:f_id>/<int:type>', views.folder_type),
     path('folder/', views.folder_detail),
     path('class/', views.user_detail),
 ]

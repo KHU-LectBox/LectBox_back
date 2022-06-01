@@ -12,13 +12,13 @@ class childSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Folder_File_Relationships
-        fields = ['parent', 'child', 'name', 'is_folder']
+        fields = ['parent', 'child', 'name', 'is_folder', 'child_type']
 
 class FolderSerializer(serializers.ModelSerializer):
 
     #items = serializers.
 
     class Meta:
-        model = Folder_File_Relationships
+        model = FolderItems
         fields = ['id', 'made_by', 'name', 'max_volume', 'volume', 'type']
 
