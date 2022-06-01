@@ -1,4 +1,5 @@
 from asyncio.windows_events import NULL
+from pickle import TRUE
 import string
 from django.http import HttpResponse, JsonResponse
 from django.views.decorators.csrf import csrf_exempt 
@@ -144,11 +145,55 @@ def folder_detail(request, f_id = NULL):
             
             p_folder = FolderItems.objects.get(id =int(request.data['parent']))
             print(f'부모: {p_folder.id}')
-            relation = Folder_File_Relationships(parent =p_folder, child =folder.id, name=request.data['name'],is_folder=True )
+            relation = Folder_File_Relationships(parent =p_folder, child =folder.id, name=request.data['name'],is_folder=True,child_type = request.data['type'])
             relation.save()
 
         return Response({'id': folder.id, }, status=200)
 
 
+@csrf_exempt
+@api_view(['GET', 'post', 'PUT', 'DELETE'])
+def folder_type(request, f_id = NULL, type=NULL):
+    """
+    자식이 특정 타입인 폴더 정보를 받는다.
+    """
+    try:
+        user = User.objects.get(username=request.user)
+    except Users.DoesNotExist:
+        return HttpResponse(status=404)
+    
+    users = Users.objects.get(user = user)
+    if request.method == 'GET':
 
+        #폴더 결정
+        folder = FolderItems.objects.get(id = f_id)
+            
+        #자식 폴더 결정
+        if (Folder_File_Relationships.objects.filter(parent = f_id).exists()):
+            items = Folder_File_Relationships.objects.filter(parent = f_id).filter(child_type = type)
+            serialized_items = childSerializer(items, many=True)
+            return Response({"id": folder.id, "made_by": folder.made_by.username , "name": folder.name, "max_volume": folder.max_volume, "volume": folder.volume, "type": folder.type, 'items':serialized_items.data}, status=200)
+        else:
+            items = NULL
+            return Response({"id": folder.id, "made_by": folder.made_by.username , "name": folder.name, "max_volume": folder.max_volume, "volume": folder.volume, "type": folder.type, 'items':items}, status=200)
 
+'''
+@csrf_exempt
+@api_view(['GET', 'post', 'PUT', 'DELETE'])
+def class_folder(request):
+    """
+    강의실에 해당하는 폴더정보를 넘겨준다.
+    """
+    try:
+        user = User.objects.get(username=request.user)
+    except Users.DoesNotExist:
+        return HttpResponse(status=404)
+
+        
+     #자식 폴더 결정
+    items = Folder_User_Relationships.objects.filter(user_id = user).filter(folder_id.type = '0')
+
+    serialized_items = childSerializer(items, many=True)
+    return Response({'items':serialized_items.data}, status=200)
+    
+'''
