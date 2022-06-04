@@ -69,6 +69,22 @@ class Folder_File_Relationships(models.Model):
     class Meta:
         ordering = ['id']
 
+
+class Folder_User_Relationships(models.Model):
+    #id 자동생성
+    folder_id = models.PositiveIntegerField(blank=False, null= False)
+    user_id =  models.TextField(blank=False, null= False)
+    FOLDER_TYPE = (
+    ('0','CLASS_ROOM'),
+    ('1','LECTURE'), 
+    ('2','ASSIGNMENT'),
+    )
+
+    type = models.CharField(max_length=1,choices=FOLDER_TYPE, default=LECTURE, null=False)
+    class Meta:
+        ordering = ['folder_id']
+
+'''
 class Folder_User_Relationships(models.Model):
     #id 자동생성
     folder_id = models.ForeignKey("app.FolderItems", related_name="match", on_delete=models.CASCADE, db_column="folder_id")
@@ -81,7 +97,7 @@ class Folder_User_Relationships(models.Model):
     
     class Meta:
         ordering = ['folder_id']
-    
+'''    
 
 
 

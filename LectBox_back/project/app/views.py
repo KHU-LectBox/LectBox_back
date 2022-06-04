@@ -6,9 +6,11 @@ from django.views.decorators.csrf import csrf_exempt
 from rest_framework.parsers import JSONParser
 
 from app.models import User, Users, FolderItems, Folder_User_Relationships, Folder_File_Relationships
-from app.serializers import childSerializer
+from app.serializers import childSerializer, UserSerializer, ClassSerializer
 
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404
+from django.forms.models import model_to_dict
+import json
 #from yaml import serialize
 
 # Create your views here.
@@ -56,8 +58,9 @@ class LoginView(APIView):
         print(request.data)
         user = authenticate(username=request.data['id'], password=request.data['pw'])
         if user is not None:
-            token = Token.objects.create(user=user)
-            #token = Token.objects.get(user=user)
+            #token = Token.objects.get_or_create(user=user)
+            token, created = Token.objects.get_or_create(user=user)
+            print(token.key)
             users = Users.objects.get(user= user)
             return Response({"Token": token.key, "id":user.username, "name" : users.name, "is_student" : users.is_student }, status=200)
         else:
@@ -69,8 +72,11 @@ def user_list(request):
     """
     유저 전체 정보 이용
     """
-    # 유저 데이터 삽입여부 테스트용
-    # 구현 필요
+    #유저 데이터 삽입여부 테스트용
+    if request.method == 'GET':
+        user = Users.objects.all()
+        serializer = UserSerializer(user, many =True)
+        return JsonResponse(serializer.data, safe=False)
        
     
 
@@ -82,7 +88,7 @@ def user_detail(request):
     """
     try:
         user = User.objects.get(username=request.user)
-    except Users.DoesNotExist:
+    except User.DoesNotExist:
         return HttpResponse(status=404)
     
     users = Users.objects.get(user = user)
@@ -91,21 +97,21 @@ def user_detail(request):
     if request.method == 'GET':
         return Response({"id": user.username, "is_student": users.is_student, "name":users.name, "email":users.email, "school":users.school, "department":users.department}, status=200)
 
-'''
     #유저 정보 수정
     elif request.method == 'PUT':
         data = JSONParser().parse(request)
-        serializer = SnippetSerializer(snippet, data=data)
+        serializer = UserSerializer(users,data)
         if serializer.is_valid():
-            serializer.save()
+            serializer.save() #db에저장해야함
             return JsonResponse(serializer.data)
         return JsonResponse(serializer.errors, status=400)
 
     #유저 정보 삭제(회원 탈퇴)
     elif request.method == 'DELETE':
-        snippet.delete()
+        user.delete()
+        users.delete()
         return HttpResponse(status=204)
-'''
+
 @csrf_exempt
 @api_view(['GET', 'post', 'PUT', 'DELETE'])
 def folder_detail(request, f_id = NULL):
@@ -114,7 +120,7 @@ def folder_detail(request, f_id = NULL):
     """
     try:
         user = User.objects.get(username=request.user)
-    except Users.DoesNotExist:
+    except User.DoesNotExist:
         return HttpResponse(status=404)
     
     users = Users.objects.get(user = user)
@@ -144,12 +150,28 @@ def folder_detail(request, f_id = NULL):
         if(not (request.data['parent'] == 0)):
             
             p_folder = FolderItems.objects.get(id =int(request.data['parent']))
-            print(f'부모: {p_folder.id}')
             relation = Folder_File_Relationships(parent =p_folder, child =folder.id, name=request.data['name'],is_folder=True,child_type = request.data['type'])
             relation.save()
+        folder_user = Folder_User_Relationships(folder_id=folder.id, user_id=user.username,type=folder.type)
+        folder_user.save()
 
         return Response({'id': folder.id, }, status=200)
+'''
+    #폴더 정보 수정
+    elif request.method == 'PUT':
+        data = JSONParser().parse(request)
+        serializer = FSerializer(users,data)
+        if serializer.is_valid():
+            serializer.save() #db에저장해야함
+            return JsonResponse(serializer.data)
+        return JsonResponse(serializer.errors, status=400)
 
+    #폴더 정보 삭제
+    elif request.method == 'DELETE':
+        folder = FolderItems.objects.get(id = f_id)
+        folder.delete()
+        return HttpResponse(status=204)
+'''
 
 @csrf_exempt
 @api_view(['GET', 'post', 'PUT', 'DELETE'])
@@ -177,23 +199,96 @@ def folder_type(request, f_id = NULL, type=NULL):
             items = NULL
             return Response({"id": folder.id, "made_by": folder.made_by.username , "name": folder.name, "max_volume": folder.max_volume, "volume": folder.volume, "type": folder.type, 'items':items}, status=200)
 
-'''
+
+#폴더 경로
 @csrf_exempt
 @api_view(['GET', 'post', 'PUT', 'DELETE'])
-def class_folder(request):
+def folder_path(request, f_id):
     """
-    강의실에 해당하는 폴더정보를 넘겨준다.
+    폴더의 경로를 반환한다.
+    """
+    
+    try:
+        user = User.objects.get(username=request.user)
+    except User.DoesNotExist:
+        return HttpResponse(status=404)
+    
+    users = Users.objects.get(user = user)
+    
+    
+    if request.method == 'GET':
+
+        folder_list=[]
+
+        target = f_id
+        isEnd = False
+        folder = FolderItems.objects.get(id = target)
+        folder_list.append(folder.name)
+        while(not isEnd):
+            try:
+                parent_folder = Folder_File_Relationships.objects.get(child= folder.id)
+                folder = FolderItems.objects.get(id = parent_folder.parent.id)
+
+            except Folder_File_Relationships.DoesNotExist:
+                isEnd = True
+                break
+
+            folder_list.append(folder.name)
+
+        #경로
+        result_path= ""
+        for i in range(len(folder_list)-1,-1,-1 ):
+            if(i == len(folder_list)-1):
+                result_path = result_path + folder_list[i]
+            else:
+                result_path = result_path +'>'+ folder_list[i]
+        #강의실
+        result_class = folder_list[len(folder_list)-1]
+        
+        return Response({"class": result_class, "path": result_path}, status=200)
+        
+#강의실 리스트
+@csrf_exempt
+@api_view(['GET'])
+def class_list(request, f_id = NULL):
+    """
+    main page
     """
     try:
         user = User.objects.get(username=request.user)
-    except Users.DoesNotExist:
+    except User.DoesNotExist:
         return HttpResponse(status=404)
-
+    users = Users.objects.get(user = user)
+    queryset= Folder_User_Relationships.objects.filter(user_id=user.username,type=0).values('folder_id') #('folder_id','folder_id.made_by','folder_id.name')
+    print(f'강의실목록:{queryset}')
+    result=[]
+    for i in queryset:
+        folder = FolderItems.objects.get(id = i['folder_id'])
+        dict_obj = model_to_dict( folder )
+        print(folder)
+        result.append(dict_obj)
+        print(result)
         
-     #자식 폴더 결정
-    items = Folder_User_Relationships.objects.filter(user_id = user).filter(folder_id.type = '0')
+    jsondata = json.dumps(result)#serializers.serialize('json', result)# fields=('id','made_by','name'))
+    return Response({'class-list' : jsondata}, status=200)
+    #return JsonResponse({'query_set'})
 
-    serialized_items = childSerializer(items, many=True)
-    return Response({'items':serialized_items.data}, status=200)
-    
-'''
+#강의실 입장
+@csrf_exempt
+@api_view(['GET'])
+def class_entrance(request,f_id=NULL):
+    """
+    using popup, enter the class
+    """
+    try:
+        user = User.objects.get(username=request.user)
+    except User.DoesNotExist:
+        return HttpResponse(status=404)
+    users = Users.objects.get(user = user)
+
+    folder = get_object_or_404(FolderItems, id = f_id)
+
+    folder_user = Folder_User_Relationships(folder_id=folder.id, user_id=user.username, type='0')
+    folder_user.save()
+
+    return Response({'폴더생성성공'}, status=200)
