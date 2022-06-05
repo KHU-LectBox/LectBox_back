@@ -155,7 +155,29 @@ def folder_detail(request, f_id = NULL):
         folder_user = Folder_User_Relationships(folder_id=folder.id, user_id=user.username,type=folder.type)
         folder_user.save()
 
+        #강의실 생성시 자동으로 강의,과제 폴더 생성
+        if(request.data['type'] == '0'):
+            #생성한 폴더가 곧 부모폴더
+            p_folder = FolderItems.objects.get(id =folder.id)
+
+            #강의
+            Lecture_folder = FolderItems(made_by=request.user, name='Lecture',max_volume=100,volume= 0,type='1')
+            Lecture_folder.save()
+            Lecture_relation = Folder_File_Relationships(parent =p_folder, child =Lecture_folder.id, name=Lecture_folder.name,is_folder=True,child_type = Lecture_folder.type)
+            Lecture_relation.save()
+            Lecture_user = Folder_User_Relationships(folder_id=Lecture_folder.id, user_id=user.username,type=Lecture_folder.type)
+            Lecture_user.save()
+
+            #과제
+            Assignment_folder = FolderItems(made_by=request.user, name='Assignment',max_volume=100,volume= 0,type='2')
+            Assignment_folder.save()
+            Assignment_relation = Folder_File_Relationships(parent =p_folder, child =Assignment_folder.id, name=Assignment_folder.name,is_folder=True,child_type = Assignment_folder.type)
+            Assignment_relation.save()
+            Assignment_user = Folder_User_Relationships(folder_id=Assignment_folder.id, user_id=user.username,type=Assignment_folder.type)
+            Assignment_user.save()
+
         return Response({'id': folder.id, }, status=200)
+        
 '''
     #폴더 정보 수정
     elif request.method == 'PUT':
