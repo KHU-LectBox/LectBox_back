@@ -1,4 +1,4 @@
-from asyncio.windows_events import NULL
+
 from pickle import TRUE
 import string
 from django.http import HttpResponse, JsonResponse
@@ -114,7 +114,7 @@ def user_detail(request):
 
 @csrf_exempt
 @api_view(['GET', 'post', 'PUT', 'DELETE'])
-def folder_detail(request, f_id = NULL):
+def folder_detail(request, f_id = None):
     """
     폴더 정보를 받는다.
     """
@@ -137,7 +137,7 @@ def folder_detail(request, f_id = NULL):
             serialized_items = childSerializer(items, many=True)
             return Response({"id": folder.id, "made_by": folder.made_by.username , "name": folder.name, "max_volume": folder.max_volume, "volume": folder.volume, "type": folder.type, 'items':serialized_items.data}, status=200)
         else:
-            items = NULL
+            items = None
             return Response({"id": folder.id, "made_by": folder.made_by.username , "name": folder.name, "max_volume": folder.max_volume, "volume": folder.volume, "type": folder.type, 'items':items}, status=200)
         
         
@@ -156,7 +156,7 @@ def folder_detail(request, f_id = NULL):
         folder_user.save()
 
         #강의실 생성시 자동으로 강의,과제 폴더 생성
-        if(request.data['type'] == '0'):
+        if((request.data['type'] == 0) or (request.data['type'] == '0') ):
             #생성한 폴더가 곧 부모폴더
             p_folder = FolderItems.objects.get(id =folder.id)
 
@@ -197,7 +197,7 @@ def folder_detail(request, f_id = NULL):
 
 @csrf_exempt
 @api_view(['GET', 'post', 'PUT', 'DELETE'])
-def folder_type(request, f_id = NULL, type=NULL):
+def folder_type(request, f_id = None, type=None):
     """
     자식이 특정 타입인 폴더 정보를 받는다.
     """
@@ -218,7 +218,7 @@ def folder_type(request, f_id = NULL, type=NULL):
             serialized_items = childSerializer(items, many=True)
             return Response({"id": folder.id, "made_by": folder.made_by.username , "name": folder.name, "max_volume": folder.max_volume, "volume": folder.volume, "type": folder.type, 'items':serialized_items.data}, status=200)
         else:
-            items = NULL
+            items = None
             return Response({"id": folder.id, "made_by": folder.made_by.username , "name": folder.name, "max_volume": folder.max_volume, "volume": folder.volume, "type": folder.type, 'items':items}, status=200)
 
 
@@ -272,7 +272,7 @@ def folder_path(request, f_id):
 #강의실 리스트
 @csrf_exempt
 @api_view(['GET'])
-def class_list(request, f_id = NULL):
+def class_list(request, f_id = None):
     """
     main page
     """
@@ -292,13 +292,14 @@ def class_list(request, f_id = NULL):
         print(result)
         
     jsondata = json.dumps(result)#serializers.serialize('json', result)# fields=('id','made_by','name'))
-    return Response({'class-list' : jsondata}, status=200)
+    Response({jsondata}, status=200)
+    #return Response({'class-list' : jsondata}, status=200)
     #return JsonResponse({'query_set'})
 
 #강의실 입장
 @csrf_exempt
 @api_view(['GET'])
-def class_entrance(request,f_id=NULL):
+def class_entrance(request,f_id=None):
     """
     using popup, enter the class
     """
