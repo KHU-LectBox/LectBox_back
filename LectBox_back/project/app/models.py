@@ -57,10 +57,11 @@ class Folder_File_Relationships(models.Model):
     #id 자동생성
     parent = models.ForeignKey("app.FolderItems", related_name="have", on_delete=models.CASCADE, db_column="parent")
     child = models.PositiveIntegerField(blank=False, null= False)
-    name = models.TextField(blank=False, null= False)
+    name = models.TextField(blank=False, null= False) #filename
     is_folder = models.BooleanField(blank=False, null=False)
     child_type = models.CharField(max_length=1,choices=FOLDER_TYPE, default=LECTURE, null=True)
-    
+    child_volume = models.PositiveIntegerField(blank=False, null= False, default=0)
+    child_made_by_name = models.TextField(blank=False, null= False,default="unknown")
     
     def get_absolute_url(self):
         """Returns the url to access a detail record for this member."""
@@ -99,11 +100,13 @@ class Folder_User_Relationships(models.Model):
         ordering = ['folder_id']
 '''    
 
-
-
-
-
-
-
-
-
+class File(models.Model):
+    # file = models.FileField(null=True, blank=True, upload_to='')
+    # id = models.IntegerField(blank=False, null= False, primary_key= True)
+    # ID auto assign
+    made_by = models.ForeignKey(User, related_name="match", on_delete=models.CASCADE, db_column="user_id", to_field='username')
+    name = models.CharField(max_length=100,blank=False, null= False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    # modified_at = models.DateTimeField(auto_now=True)
+    volume = models.IntegerField(blank=False, null= False)
+    is_protected = models.BooleanField(blank=False, null=False)

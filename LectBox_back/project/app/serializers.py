@@ -12,7 +12,7 @@ class childSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Folder_File_Relationships
-        fields = ['parent', 'child', 'name', 'is_folder', 'child_type']
+        fields = ['parent', 'child', 'name', 'is_folder', 'child_type','child_volume','child_made_by_name']
 
 class FolderSerializer(serializers.ModelSerializer):
 
@@ -36,7 +36,7 @@ class UserSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Users
-        fields = ['user', 'is_student', 'name', 'email', 'school', 'department']
+        fields = ['is_student', 'name', 'email', 'school', 'department']
 
 class FSerializer(serializers.ModelSerializer):
 
